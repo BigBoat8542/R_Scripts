@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Droning On</title>
+    <meta charset="utf-8" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/lucy.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/middlebury-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="themes/class3-theme.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Droning On
+## New Methods in Earth Observation
+### Assignment 2
+
+---
+
+
+
+
+---
+
+## Short Answer questions. One paragraph each. 
+
+### 1. SmallSats like Planet Doves represent a new model for satellite-based Earth Observation, using large constellations of less expensive small satellites. However, SmallSats have their own limitations, due to the large number of satellites used and because they are managed by private companies. Name two potential limitations to SmallSats and the methods to address these limitations.
+
+### 2. In the Jain et al. (2016) paper, the authors use SkySat and Landsat imagery to map sowing date and yield for smallholder wheat fields. Name one advantage of each sensor mentioned in the article (note: this just refers to advantages mentioned for this article, not general advantages/disadvantages of smallSats)
+
+---
+
+```
+## write short answer responses here
+
+1.  A significant tradeoff of small sats includes their lower spatial resoltuons and computational capacity. In a Landsay like satellite, you can store larger amounts of data and imagery with consistent spatial resolution which doesn't include smallsats. To address this, SmallSats could find ways to store data in larger servers, and to sacrifice some spectral resolution for spatial resolution.
+
+2. Between each sensor, there are a few differences that make one more useful than another. SkySat is more useful when mapping to see better spatial resolution, as the images are clearer making it good for accurate field productions. Landsat however, which is better for mapping temporal resolution and is better for temporal coverage. 
+
+```
+
+---
+
+## Deforestation monitoring
+### Today we will look at deforestation near the Inírida river in Colombia
+### [News article](https://news.mongabay.com/2019/09/as-the-amazon-burns-colombias-forests-decimated-for-cattle-and-coca/)
+
+---
+
+## Global Forest Watch
+### Remove the existing layers in the Legend (click the "x")
+### In the left menu, select Forest Change --&gt; Deforestation Alerts (GLAD)
+### Set the time frame from Jan 1 2018 to the present
+### Select "Show Only High Confidence Alerts"
+### You should see quite a bit of recent deforestation near the river.
+
+---
+
+## Global Forest Watch
+### Remove the existing layers in the Legend (click the "x")
+### In the left menu, select Forest Change --&gt; Deforestation Alerts (GLAD)
+### Set the time frame from Jan 1 2018 to the present
+### Select "Show Only High Confidence Alerts"
+### You should see quite a bit of recent deforestation near the river.
+
+---
+
+## Downloading NICFI basemaps
+### We will download NICFI basemaps using Jupyter notebook
+### Open Anaconda Navigator and Launch Jupyter Labs
+### Open "planet_basemap_download.ipynb" under materials --&gt; code --&gt; python
+
+
+---
+
+## Downloading NICFI basemaps
+### You will need to alter some of the variables in the 2nd block
+### For "PLANET_API_KEY", you need to log-in to your [Planet account](https://www.planet.com/account/#/profile) and click on the Account icon (top-right). Click the "eye" icon to show your API key, then copy and paste it into Jupyter Labs.
+### For "DIR", use your output directory. Use forward slashes "/" with no slash at the end
+
+---
+
+## Downloading NICFI basemaps
+### For "string_bbox", change this to represent the lon/lat of our point: -71.78366,2.27885 . You need to repeat this twice, so enter "-71.78366,2.27885,-71.78366,2.27885"
+### Finally for "mosaic_date", we will use two dates. "2021-02" (a monthly basemap from Feb 2021) and "2017-12_2018-05" (a biannual basemap from Dec 2017 to May 2018)
+### You will need to run the chunks of code in Jupyter Labs twice, once for each "mosaic_date".
+### This should result in two TIFFs being downloaded, for one quad location.
+
+---
+
+## Question
+### What is the quad ID for this location? It should be in the file name, before the year and month of the mosaic.
+
+```
+## write answer here
+
+1. 6151036
+
+```
+---
+
+## Processing in R
+### Now that the basemap quads are downloaded, we can perform analysis in R.
+### we'll refer to the basemap from Dec 2017 - May 2018 as "feb_2018_raster"
+### write code below to load the two raster quads
+
+
+```r
+library(raster)
+```
+
+```
+## Loading required package: sp
+```
+
+```r
+feb_2018_raster &lt;- raster::stack("/Users/lukewatson-sharer/Documents/Assignment2Geog287/615-1036_2017-12_2018-05.tiff")
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+```r
+feb_2021_raster &lt;- raster::stack("/Users/lukewatson-sharer/Documents/Assignment2Geog287/615-1036_2021-02.tiff")
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+---
+## Processing in R
+### Let's plot false-color composites of each raster.
+### Fill in the "bands_to_plot" below with the bands used in the false color composite. For example c(3,2,1) would plot band 3 as red, band 2 as green, and band 1 as blue. This is a true-color composite, but we want a false-color (NIR, red, green). The band order for the mosaics is Blue, Green, Red, NIR, Alpha.
+### We set the zlim to plot values from 0 to 5000, even though the reflectance values can go from 0 to 10000. This makes our image "brighter" and helps us to see contrast.
+
+---
+
+
+```r
+## fill in right side with NIR, red, and green band numbers
+bands_to_plot &lt;- c( 4 , 3 , 2)
+
+R2021_FCC_Plot &lt;- plotRGB(feb_2021_raster[[bands_to_plot]],
+        zlim = c(0, 5000),
+        stretch = "lin")
+```
+
+![](assignment2_files/figure-html/unnamed-chunk-2-1.png)&lt;!-- --&gt;
+
+---
+
+### Now let's also plot a false color composite of the Feb 2018 image.
+### fill in code below
+
+
+```r
+R2018_FCC_Plot &lt;- plotRGB(feb_2018_raster[[bands_to_plot]],
+        zlim = c(0, 5000),
+        stretch = "lin")
+```
+
+![](assignment2_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+
+---
+
+### Next let's calculate the NDVI images. Recall that NDVI = (NIR - red)/(NIR + red)
+### To select a band from a raster stack, use this notation. If "a" is a raster stack, then a[[3]] selects the 3rd band from a, a[[4]] selects the 4th band etc.
+### fill in code below
+
+
+
+```r
+## calculate ndvi images
+feb_2021_ndvi &lt;-  (feb_2021_raster[[4]]-feb_2021_raster[[3]])/(feb_2021_raster[[4]]+ feb_2021_raster[[3]])
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+```r
+feb_2018_ndvi &lt;- (feb_2018_raster[[4]]-feb_2018_raster[[3]])/(feb_2018_raster[[4]]+ feb_2018_raster[[3]])
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+---
+## Let's plot the NDVI images
+### First plot the Feb 2021 NDVI image. We set zlim = c(0,1) to stretch between values of 0 and 1.
+---
+
+```r
+## plot ndvi
+raster::plot(feb_2021_ndvi,
+            zlim = c(0,1))
+```
+
+![](assignment2_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+---
+### Next plot the Feb 2018 image.
+### Fill in code below
+---
+
+```r
+## plot ndvi
+raster::plot(feb_2018_ndvi,
+            zlim = c(0,1))
+```
+
+![](assignment2_files/figure-html/unnamed-chunk-6-1.png)&lt;!-- --&gt;
+---
+
+### Now let's find the difference of the two ndvi images
+### subtract the 2018 ndvi image from the 2021 image
+### fill in code below
+
+
+```r
+## ndvi diff
+diff_ndvi &lt;- feb_2021_ndvi - feb_2018_ndvi
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+---
+
+### plot the ndvi difference
+### Set the zlim parameter to stretch between -0.2 and 0.2 
+### Because we are just plotting one band, we want to use the "raster::plot" function and not the "raster::plotRGB" function.
+### Using the default palette, ndvi decrease will appear white and ndvi increase will appear green.
+### fill in code below
+---
+
+
+```r
+## plot ndvi difference
+raster::plot (diff_ndvi,
+            zlim = c(-0.2,0.2))
+```
+
+![](assignment2_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
+---
+
+### You can write the raster to a .tif file and then open it in QGIS
+### QGIS is better suited for zooming in and adjusting the color palette
+
+
+```r
+## plot the ndvi difference
+ndviTif&lt;- writeRaster(diff_ndvi, file = "diff_ndvi.tif", overwrite = T)
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+```r
+plot(ndviTif)
+```
+
+![](assignment2_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
+
+
+---
+
+## Question
+### 2. Do there appear to be more high gains (0.2 NDVI units or greater) or high losses (-0.2 NDVI units or less) in the "ndvi_diff" image?
+### Where do gains/losses appear to be located?
+### Are there areas of NDVI gain/loss that are not forest gain/loss?
+---
+```
+## write answer here
+
+2. Here we can see the strongers cocnentrations of above .2 ndvi along(just outside) the river, meaning that this is where the highest concentration of vegetation exist. The highest losses appear to be on the river, meaning the areas just on it appear to have the lowest ndvi values. The areas not along the river and towards the south appear to be just simply show little to no loss. 
+
+```
+---
+## We'd like to calculate the area of potential deforestation, where ndvi has changed by -0.2 or lower. 
+## However, we don't want to include the river/lake, so want to mask out water areas.
+
+---
+## let's first create a map of potential forest loss
+## the code below creates a boolean map with 1 where diff_ndvi is below -0.2, meaning that ndvi decreased by more than 0.2 units.
+
+
+
+```r
+potential_deforestation &lt;- (diff_ndvi &lt; -0.2)
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+```r
+raster::plot(potential_deforestation)
+```
+
+![](assignment2_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
+
+---
+## we'd like to mask out areas that look like water (the river and the lake in the northeast). One way to mask water is to look for low ndvi locations.
+## in the code below, find all locations where the feb_2021_ndvi image is less than 0.2
+## fill in code below
+---
+
+```r
+## fill in code below for the water mask. this is similar to the above code
+water_mask &lt;- (feb_2021_ndvi &lt; 0.2)
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+```r
+raster::plot(water_mask)
+```
+
+![](assignment2_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+
+---
+
+## next, mask the "potential_deforestation" image, using the "water_mask" image as a mask
+## the "maskvalue" parameter tells R what values to mask in the "water_mask" file
+---
+
+
+```r
+masked_deforestation &lt;- raster::mask(potential_deforestation,
+                                     mask = water_mask,
+                                     maskvalue = 1)
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded ellps WGS 84 in Proj4 definition: +proj=merc +a=6378137
+## +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null
+## +wktext +no_defs +type=crs
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum World Geodetic System 1984 in Proj4 definition
+```
+
+```r
+plot(masked_deforestation, zlim = c(0,1))
+```
+
+![](assignment2_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
+
+---
+
+
+## finally let's calculate the area of potential deforestation in this quad
+## we need both the spatial resolution and the number of cells that we have labeled as potential deforestation.
+## the below code calculates this 
+
+
+```r
+spatial_resolution &lt;- res(masked_deforestation)
+number_cells &lt;- sum(masked_deforestation[] == 1, na.rm =  T)
+
+# calculate number 3
+
+area &lt;- (number_cells*(4.78^2))
+
+
+quad_area &lt;- 4096*4096
+potential_def_sqm &lt;- number_cells/quad_area
+```
+
+---
+
+##Questions
+
+### 3. Using the information above, calculate the area (in square meters) of potential deforestation. There are different methods to do this, please explain your reasoning.
+
+### 4. What percent of the total quad area is potential deforestation? Again, please explain your reasoning.
+
+---
+
+```
+## write answer here
+
+3. 1105040.0176 square meters. I simply squared the area total that we had calculated. This made it so you can take it from meters to meters squared
+
+4. .002882719. I calculated the total area in the images, and then the number of cells values divided by that would show which are the deofrestation cells.
+
+```
+
+---
+
+Submission instructions
+
+For your final submission,  run the "knitr::opts_chunk$set(echo = TRUE)" chunk at the top of this notebook. Then knit your .Rmd into a .html file. 
+
+Check that your plots/answers are appearing in the .html file. Then submit both the .Rmd and .html files on Slack.
+
+Questions? Errors? Post them on Slack!
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
