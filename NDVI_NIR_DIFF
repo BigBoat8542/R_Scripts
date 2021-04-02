@@ -1,0 +1,116 @@
+---
+title: "Droning On"
+subtitle: "New Methods in Earth Observation"
+date: "Assignment 1"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: ["default", "lucy", "middlebury-fonts", "themes/class3-theme.css"]
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Short Answer questions. One paragraph each. 
+#1. Why does the spatial-temporal resolution trade-off exist for satellite imagery? How do drones help overcome this tradeoff? What are some potential limitations of drones compared to traditional satellites?
+#2. What are the requirements for RTK and PPK geometric correction of drone imagery? Name one advantage of RTK correction, and one advantage of PPK correction.
+#3. Aside from improved spatial/temporal resolution, name 2 reasons mentioned in the Manfreda paper on how drones can be transformative for Earth Observation.
+ 
+```
+## write short answer responses here
+1.The Spatial-temporal resolution trade-off exist due to basic physics and energy. Spatial resolution requires small pixels, requiring wide bandwidth and or smaller IFOV, making it so temporal resolution decreases. Only way to increase temporal resolution is to do the opposite which would lower spatial resolution. Drones help because the IFOV becomes infinitely shorter than when you use a satellite like Terra modis that is huge pixel size and takes a long time to get across space, versus drones which can be localized and don't have as long as an IFOV. Limitations compared to traditional satellites are the type of energy a drone can receive to a sensor, the bands of imagery it can detect and actively use. Drones have less bands etc but can lower the IFOV and the time it takes to go through a certain space(drone flight planning)
+2. RTK requirements: Needs a reference station, for use of geotagged locations. Needs 4 lines of communication between stations, satellites, the drone, network, base station etc. This is what allows it to make geometric corrections as it flys.
+PPK requirements: Two lines of communication bto create the correct location data, satellite and base station and satellites and the drone. 
+RTK adavntage: The correction is done immediately once the flight is completed
+PPK advantage: removes the need for GCP points
+3. With drones being widely adopted into a wide range of new fields, in the field of Earth Observations, the advances in drone technology ultimately create an opportunity to create new findings at a relatively low cost and barrier to entry. With this new change to acquisition cost of imagery, it's widely more accesible to users who are interested in conducting lower cost research, with comperable results in terms of spatial and temporal resolution. Another reason for this is the advances in open source software. As software has become more of a collective effort and collaborative, there are more low cost ways to process drone imagery. In the realm of agriculture, drones can produe comperable results with new indices such as NGDRI, and can be used in places where on ground surverying can be damaging to the habitat being examined. There are many more ways to keep consistent monitoring and imagery of areas with UAS simply because it's much more free will and controllable than the satellites we have used for a long time. 
+```
+---
+## Reflectance calibration vs. non-reflectance calibration 
+#We flew the drone on both 7/21/20 (cloudy) and 8/3/20 (clear). We want to see the effect of reflectance calibration on each date, to see if reflectance calibration has a larger effect on one of the dates. We will compare the reflectance and non-reflectance corrected versions of (i) near-infrared band and (ii) NDVI band for each date.
+---
+## Step 1, processing July 21 images in Pix4D
+
+#Step 1. In Pix4D, process the PPK-corrected images, first with reflectance calibration, then without reflectance calibration (pressing "Reset" for the calibration images). You can find the PPK-corrected images for 7/21/20 on the
+# done
+---
+## Step 2, importing images into RStudio, creating NDVI images
+You have now created surface reflectance mosaics for 7/21/20. Together with the mosaics for 8/3/20 (on the class share), we now have four sets of mosaics.
+- 7/21/20 PPK corrected, reflectance calibration
+- 7/21/20 PPK corrected, no reflectance calibration
+- 8/3/20 PPK corrected, reflectance calibration
+- 8/3/20 PPK corrected, no reflectance calibration
+You will need to perform several steps to load the images into R. 
+
+```{r, eval = FALSE}
+## write code for Step 2 here
+library(raster)
+library(rgdal)
+library(sf)
+library(dplyr)
+# july 21 2020
+nir_refl_07aug21<-raster("/Users/lukewatson-sharer/Documents/pix4d/lab1processing/4_index/reflectance/lab1processing_transparent_reflectance_nir.tif")
+red_refl_07aug21 <-raster("/Users/lukewatson-sharer/Documents/pix4d/lab1processing/4_index/reflectance/lab1processing_transparent_reflectance_red.tif")
+red_no_refl_07aug21 <- raster("/Users/lukewatson-sharer/Documents/pix4d/pix4D2/withoutcalib/4_index/reflectance/withoutcalib_transparent_reflectance_red.tif")
+nir_no_refl_07aug21 <-  raster("/Users/lukewatson-sharer/Documents/pix4d/pix4D2/withoutcalib/4_index/reflectance/withoutcalib_transparent_reflectance_nir.tif")
+#august 03 2020
+nir_refl_03aug20 <- raster("/Users/lukewatson-sharer/Downloads/OneDrive_2_3-14-2021/2020_08_03_mosaics/2020_08_03_with_refl_calibration/whittier_03aug20_pix4d_transparent_reflectance_nir.tif")
+nir_no_refl_03aug20 <-raster("/Users/lukewatson-sharer/Downloads/OneDrive_2_3-14-2021/2020_08_03_mosaics/2020_08_03_without_refl_calibration/whittier_03aug20_ppk_without_refl_cal_transparent_reflectance_nir.tif")
+red_refl_03aug20 <- raster("/Users/lukewatson-sharer/Downloads/OneDrive_2_3-14-2021/2020_08_03_mosaics/2020_08_03_with_refl_calibration/whittier_03aug20_pix4d_transparent_reflectance_red.tif")
+red_no_refl_03aug20 <- raster("/Users/lukewatson-sharer/Downloads/OneDrive_2_3-14-2021/2020_08_03_mosaics/2020_08_03_without_refl_calibration/whittier_03aug20_ppk_without_refl_cal_transparent_reflectance_red.tif")
+crs_drone <- (crs(nir_refl_03aug20))
+whittier_poly <- st_read("/Users/lukewatson-sharer/Downloads/OneDrive_2_3-14-2021/whittier_shapefile/whittier.shp")
+whittier_poly_rpj <- st_transform(whittier_poly, crs = crs_drone)
+```
+--- 
+## Step 3, creating difference images, calculating mean difference
+Step 3. For the 7/21/20 NIR images, find the difference between NIR surface reflectance with and without reflectance calibration. 
+```{r, eval = FALSE}
+
+ndvi_refl_03aug20 <- (nir_refl_03aug20 - red_refl_03aug20)/(nir_refl_03aug20 + red_refl_03aug20)
+# ndvi without reflecance correction
+ndvi_no_refl_03aug20 <- (nir_no_refl_03aug20 - red_no_refl_03aug20)/(nir_no_refl_03aug20 + red_no_refl_03aug20)
+ndvi_refl_07aug21<- (nir_refl_07aug21- red_refl_07aug21)/(nir_refl_07aug21 + red_refl_07aug21)
+# ndvi without reflecance correction
+ndvi_no_refl_07aug21 <- (nir_no_refl_07aug21 - red_no_refl_07aug21)/(nir_no_refl_07aug21 + red_no_refl_07aug21)
+```
+## Step 4, comparing results between July 21 and August 03
+Step 4. What were the mean differences in (i) NIR surface reflectance and (ii) NDVI for each date? 
+Which date saw a greater difference between reflectance calibrated/non-calibrated images for NIR? for NDVI?
+```{r, eval = FALSE}
+
+## NIR difference
+# calculate difference of nir surface reflectance, with and without reflectance calibration
+diff_nir_03aug20 <- nir_refl_03aug20 - nir_no_refl_03aug20
+# plot the difference image
+plot(diff_nir_03aug20, zlim = c(-0.5, 0.5))
+plot(whittier_poly_rpj, add = TRUE)
+# calculate the mean difference over the field polygons
+nir_mean_diff_03aug20 <- extract(diff_nir_03aug20, whittier_poly_rpj) %>% first() %>% mean(., na.rm = TRUE)
+diff_nir_07aug21 <- nir_refl_07aug21 - nir_no_refl_07aug21
+# plot the difference image
+plot(diff_nir_07aug21, zlim = c(-0.5, 0.5))
+plot(whittier_poly_rpj, add = TRUE)
+# calculate the mean difference over the field polygons
+nir_mean_diff_07aug21 <- extract(diff_nir_07aug21, whittier_poly_rpj) %>% first() %>% mean(., na.rm = TRUE)
+## NDVI difference
+# calculate difference of ndvi surface reflectance, with and without reflectance calibration
+diff_ndvi_07aug21 <- ndvi_refl_07aug21 - ndvi_no_refl_07aug21
+# plot the difference image
+plot(diff_ndvi_07aug21, zlim = c(-0.5, 0.5))
+plot(whittier_poly_rpj, add = TRUE)
+# calculate the mean difference over the field polygons
+ndvi_mean_diff <- extract(diff_ndvi_07aug21, whittier_poly_rpj) %>% first() %>% mean(., na.rm = TRUE)
+diff_ndvi_03aug20 <- ndvi_refl_03aug20 - ndvi_no_refl_03aug20
+# plot the difference image
+plot(diff_ndvi_03aug20, zlim = c(-0.5, 0.5))
+plot(whittier_poly_rpj, add = TRUE)
+# calculate the mean difference over the field polygons
+ndvi_mean_diff_aug <- extract(diff_ndvi_03aug20, whittier_poly_rpj) %>% first() %>% mean(., na.rm = TRUE)
+#mean differences NIR July: .182936 NIR Aug: .09340 NDVI July: .06938  NDVI Aug: -.01201
+# Greater difference NIR: August
+# Greater difference NDVI: July
+```
