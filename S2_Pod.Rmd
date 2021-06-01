@@ -1,0 +1,140 @@
+library(lubridate)
+library(Hmisc)
+#library(dplyr)
+## GEE scripts- https://code.earthengine.google.com/503af9df63342d946e340759c650b0de https://code.earthengine.google.com/dc7706113205c93ff1fe9e28e66f1455 https://code.earthengine.google.com/f34685accb2c8d024f0adbc85db19440
+
+
+## Load in Data
+pod_data_sensor1_loc1 <- read.csv("/Users/lukewatson-sharer/Downloads/sensor1csv.csv")
+pod_data_sensor1_loc2 <- read.csv("/Users/lukewatson-sharer/Downloads/sensor2csv.csv")
+pod_data_sensor1_loc3 <- read.csv("/Users/lukewatson-sharer/Downloads/sensor3csv.csv")
+sent2_loc1_NDVI <- read.csv("/Users/lukewatson-sharer/Downloads/NDVILoc1Smooth.csv")
+sent2_loc2_NDVI <- read.csv("/Users/lukewatson-sharer/Downloads/NDVILoc2Smooth.csv")
+sent2_loc3_NDVI <- read.csv("/Users/lukewatson-sharer/Downloads/NDVILoc3Smooth.csv")
+sent2_loc1_SAVI <- read.csv("/Users/lukewatson-sharer/Downloads/SAVILoc1Smooth.csv")
+sent2_loc2_SAVI <- read.csv("/Users/lukewatson-sharer/Downloads/SAVILoc2Smooth.csv")
+sent2_loc3_SAVI <- read.csv("/Users/lukewatson-sharer/Downloads/SAVILoc3Smooth.csv")
+sent2_loc1_GCVI <- read.csv("/Users/lukewatson-sharer/Downloads/GCVILoc1Smooth.csv")
+sent2_loc2_GCVI <- read.csv("/Users/lukewatson-sharer/Downloads/GCVILoc2Smooth.csv")
+sent2_loc3_GCVI <- read.csv("/Users/lukewatson-sharer/Downloads/GCVILoc3Smooth.csv")
+
+# Assign dates
+pod_data_sensor1_loc1$date <- as_date(pod_data_sensor1_loc1$time)
+pod_data_sensor1_loc2$date <- as_date(pod_data_sensor1_loc2$time)
+pod_data_sensor1_loc3$date <- as_date(pod_data_sensor1_loc3$time)
+sent2_loc1_NDVI$date <- as_date(sent2_loc1_NDVI$system.time_start)
+sent2_loc2_NDVI$date <- as_date(sent2_loc2_NDVI$system.time_start)
+sent2_loc3_NDVI$date <- as_date(sent2_loc3_NDVI$system.time_start)
+sent2_loc1_SAVI$date <- as_date(sent2_loc1_SAVI$system.time_start)
+sent2_loc2_SAVI$date <- as_date(sent2_loc2_SAVI$system.time_start)
+sent2_loc3_SAVI$date <- as_date(sent2_loc3_SAVI$system.time_start)
+sent2_loc1_GCVI$date <- as_date(sent2_loc1_GCVI$system.time_start)
+sent2_loc2_GCVI$date <- as_date(sent2_loc2_GCVI$system.time_start)
+sent2_loc3_GCVI$date <- as_date(sent2_loc3_GCVI$system.time_start)
+
+# Reorganize data
+#NDVI
+colnames(sent2_loc1_NDVI) <- c("S2_time", "S2_ndvi_original", "S2_ndvi_smoothed")
+sent2_loc1_NDVI$date = as_date(sent2_loc1_NDVI$S2_time, format = "%b %d, %Y")
+colnames(sent2_loc2_NDVI) <- c("S2_time", "S2_ndvi_original", "S2_ndvi_smoothed")
+sent2_loc2_NDVI$date = as_date(sent2_loc2_NDVI$S2_time, format = "%b %d, %Y")
+colnames(sent2_loc3_NDVI) <- c("S2_time", "S2_ndvi_original", "S2_ndvi_smoothed")
+sent2_loc3_NDVI$date = as_date(sent2_loc3_NDVI$S2_time, format = "%b %d, %Y")
+#SAVI
+colnames(sent2_loc1_SAVI) <- c("S2_time", "S2_savi_original", "S2_savi_smoothed")
+sent2_loc1_SAVI$date = as_date(sent2_loc1_SAVI$S2_time, format = "%b %d, %Y")
+colnames(sent2_loc2_SAVI) <- c("S2_time", "S2_savi_original", "S2_savi_smoothed")
+sent2_loc2_SAVI$date = as_date(sent2_loc2_SAVI$S2_time, format = "%b %d, %Y")
+colnames(sent2_loc3_SAVI) <- c("S2_time", "S2_savi_original", "S2_savi_smoothed")
+sent2_loc3_SAVI$date = as_date(sent2_loc3_SAVI$S2_time, format = "%b %d, %Y")
+#GCVI
+colnames(sent2_loc1_GCVI) <- c("S2_time", "S2_gcvi_original", "S2_gcvi_smoothed")
+sent2_loc1_GCVI$date = as_date(sent2_loc1_GCVI$S2_time, format = "%b %d, %Y")
+colnames(sent2_loc2_GCVI) <- c("S2_time", "S2_gcvi_original", "S2_gcvi_smoothed")
+sent2_loc2_GCVI$date = as_date(sent2_loc2_GCVI$S2_time, format = "%b %d, %Y")
+colnames(sent2_loc3_GCVI) <- c("S2_time", "S2_gcvi_original", "S2_gcvi_smoothed")
+sent2_loc3_GCVI$date = as_date(sent2_loc3_GCVI$S2_time, format = "%b %d, %Y")
+
+#remove NA column
+sent2_loc1_NDVI<- sent2_loc1_NDVI[, -4]
+sent2_loc2_NDVI<- sent2_loc2_NDVI[, -4]
+sent2_loc3_NDVI<- sent2_loc3_NDVI[, -4]
+sent2_loc1_SAVI<- sent2_loc1_SAVI[, -4]
+sent2_loc2_SAVI<- sent2_loc2_SAVI[, -4]
+sent2_loc3_SAVI<- sent2_loc3_SAVI[, -4]
+sent2_loc1_GCVI<- sent2_loc1_GCVI[, -4]
+sent2_loc2_GCVI<- sent2_loc2_GCVI[, -4]
+sent2_loc3_GCVI<- sent2_loc3_GCVI[, -4]
+
+#Filtering objects
+
+s2_smoothed_loc1_ndvi_filt <- sent2_loc1_NDVI %>% filter(!is.na(sent2_loc1_NDVI))
+s2_smoothed_loc2_ndvi_filt <- sent2_loc2_NDVI %>% filter(!is.na(sent2_loc2_NDVI))
+s2_smoothed_loc3_ndvi_filt <- sent2_loc3_NDVI %>% filter(!is.na(sent2_loc3_NDVI))
+
+s2_smoothed_loc1_savi_filt <- sent2_loc1_SAVI %>% filter(!is.na(sent2_loc1_SAVI))
+s2_smoothed_loc2_savi_filt <- sent2_loc2_SAVI %>% filter(!is.na(sent2_loc2_SAVI))
+s2_smoothed_loc3_savi_filt <- sent2_loc3_SAVI %>% filter(!is.na(sent2_loc3_SAVI))
+
+s2_smoothed_loc1_gcvi_filt <- sent2_loc1_GCVI %>% filter(!is.na(sent2_loc1_GCVI))
+s2_smoothed_loc2_gcvi_filt <- sent2_loc2_GCVI %>% filter(!is.na(sent2_loc2_GCVI))
+s2_smoothed_loc3_gcvi_filt <- sent2_loc3_GCVI %>% filter(!is.na(sent2_loc3_GCVI))
+
+#Merging and joinig
+pod_data_joined_loc1_ndvi <- merge(pod_data_sensor1_loc1, s2_smoothed_loc1_ndvi_filt, by = 'date', all.x = TRUE)
+pod_data_joined_loc2_ndvi <- merge(pod_data_sensor1_loc2, s2_smoothed_loc2_ndvi_filt, by = 'date', all.x = TRUE)
+pod_data_joined_loc3_ndvi <- merge(pod_data_sensor1_loc3, s2_smoothed_loc3_ndvi_filt, by = 'date', all.x = TRUE) 
+
+pod_data_joined_loc1_savi <- merge(pod_data_sensor1_loc1, s2_smoothed_loc1_savi_filt, by = 'date', all.x = TRUE)
+pod_data_joined_loc2_savi <- merge(pod_data_sensor1_loc2, s2_smoothed_loc2_savi_filt, by = 'date', all.x = TRUE)
+pod_data_joined_loc3_savi <- merge(pod_data_sensor1_loc3, s2_smoothed_loc3_savi_filt, by = 'date', all.x = TRUE)
+
+pod_data_joined_loc1_gcvi <- merge(pod_data_sensor1_loc1, s2_smoothed_loc1_gcvi_filt, by = 'date', all.x = TRUE)
+pod_data_joined_loc2_gcvi <- merge(pod_data_sensor1_loc2, s2_smoothed_loc2_gcvi_filt, by = 'date', all.x = TRUE)
+pod_data_joined_loc3_gcvi <- merge(pod_data_sensor1_loc3, s2_smoothed_loc3_gcvi_filt, by = 'date', all.x = TRUE)
+
+## correlation
+corr_results_ndvi_loc1 <- rcorr(pod_data_joined_loc1_ndvi$ndvi, pod_data_joined_loc1_ndvi$S2_ndvi_smoothed, type = "pearson")
+corr_results_ndvi_loc2 <- rcorr(pod_data_joined_loc2_ndvi$ndvi, pod_data_joined_loc2_ndvi$S2_ndvi_smoothed, type = "pearson")
+corr_results_ndvi_loc3 <- rcorr(pod_data_joined_loc3_ndvi$ndvi, pod_data_joined_loc3_ndvi$S2_ndvi_smoothed, type = "pearson")
+
+corr_results_savi_loc1 <- rcorr(pod_data_joined_loc1_savi$savi, pod_data_joined_loc1_savi$S2_savi_smoothed, type = "pearson")
+corr_results_savi_loc2 <- rcorr(pod_data_joined_loc2_savi$savi, pod_data_joined_loc2_savi$S2_savi_smoothed, type = "pearson")
+corr_results_savi_loc3 <- rcorr(pod_data_joined_loc3_savi$savi, pod_data_joined_loc3_savi$S2_savi_smoothed, type = "pearson")
+
+corr_results_gcvi_loc1 <- rcorr(pod_data_joined_loc1_gcvi$gcvi, pod_data_joined_loc1_gcvi$S2_gcvi_smoothed, type = "pearson")
+corr_results_gcvi_loc2 <- rcorr(pod_data_joined_loc2_gcvi$gcvi, pod_data_joined_loc2_gcvi$S2_gcvi_smoothed, type = "pearson")
+corr_results_gcvi_loc3 <- rcorr(pod_data_joined_loc3_gcvi$gcvi, pod_data_joined_loc3_gcvi$S2_gcvi_smoothed, type = "pearson")
+
+#print and test
+print("correlation" )
+print(corr_results$r)
+print("p value")
+print(corr_results$P)
+
+# run a linear model
+pod_data_joined_loc1_ndvi.lm <- lm(formula = ndvi ~  S2_ndvi_smoothed, data = pod_data_joined_loc1_ndvi)
+pod_data_joined_loc2_ndvi.lm <- lm(formula = ndvi ~  S2_ndvi_smoothed, data = pod_data_joined_loc2_ndvi)
+pod_data_joined_loc3_ndvi.lm <- lm(formula = ndvi ~  S2_ndvi_smoothed, data = pod_data_joined_loc3_ndvi)
+
+pod_data_joined_loc1_savi.lm <- lm(formula = ndvi ~  S2_savi_smoothed, data = pod_data_joined_loc1_savi)
+pod_data_joined_loc2_savi.lm <- lm(formula = ndvi ~  S2_savi_smoothed, data = pod_data_joined_loc2_savi)
+pod_data_joined_loc3_savi.lm <- lm(formula = ndvi ~  S2_savi_smoothed, data = pod_data_joined_loc3_savi)
+
+pod_data_joined_loc1_gcvi.lm <- lm(formula = ndvi ~  S2_gcvi_smoothed, data = pod_data_joined_loc1_gcvi)
+pod_data_joined_loc2_gcvi.lm <- lm(formula = ndvi ~  S2_gcvi_smoothed, data = pod_data_joined_loc2_gcvi)
+pod_data_joined_loc3_gcvi.lm <- lm(formula = ndvi ~  S2_gcvi_smoothed, data = pod_data_joined_loc3_gcvi)
+
+#print summary
+
+summary(pod_data_joined_loc1_ndvi.lm)
+summary(pod_data_joined_loc2_ndvi.lm)
+summary(pod_data_joined_loc3_ndvi.lm)
+
+summary(pod_data_joined_loc1_savi.lm)
+summary(pod_data_joined_loc2_savi.lm)
+summary(pod_data_joined_loc3_savi.lm)
+
+summary(pod_data_joined_loc1_gcvi.lm)
+summary(pod_data_joined_loc2_gcvi.lm)
+summary(pod_data_joined_loc3_gcvi.lm)
